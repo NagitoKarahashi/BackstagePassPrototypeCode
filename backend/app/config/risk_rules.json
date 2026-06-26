@@ -1,0 +1,14 @@
+{
+  "weights": {
+    "high_velocity_order": 0.30,
+    "device_multi_account": 0.25,
+    "wallet_reuse": 0.20,
+    "location_mismatch": 0.10,
+    "high_order_amount": 0.15,
+    "qr_duplicate_attempt": 0.40
+  },
+  "thresholds": {
+    "approve_max": 0.39,
+    "review_max": 0.74
+  }
+}

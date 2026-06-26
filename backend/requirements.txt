@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+rank-bm25
+joblib
+pydantic
+textblob
+supabase
+python-dotenv
+streamlit
+sentence-transformers
+faiss-cpu
+chromadb
+email-validator>=2.0.0
+PyJWT[crypto]

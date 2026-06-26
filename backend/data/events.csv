@@ -1,0 +1,13 @@
+event_id,title,artist,genre,city,country,region,start_time,desc
+E1001,Indie Night Taipei,City Waves,indie,Taipei,TW,EastAsia,2025-12-05 20:00,"Suitable for Indie lovers."
+E1002,EDM Lights Kaohsiung,DJ Aurora,edm,Kaohsiung,TW,EastAsia,2025-12-12 21:00,"EDM party with powerful aura."
+E1003,Jazz Warm Evening,Blue Note Trio,jazz,Taipei,TW,EastAsia,2025-12-20 19:30,"Warm Jazz night, good for relax."
+E2001,Harbour Night EDM,Various Artists,edm,Hong Kong,HK,EastAsia,2025-12-05 20:00,"Outdoor EDM festival by the harbor."
+E2002,Indie Waves,Local Bands,indie,Hong Kong,HK,EastAsia,2025-12-12 19:30,"Indie rock and dream pop from local bands."
+E2003,Symphony Under The Stars,HK Philharmonic,classic,Hong Kong,HK,EastAsia,2025-12-20 19:00,"Classical music open-air concert."
+E2004,Shenzhen City Lights Live,DJ Nova,edm,Shenzhen,CN,EastAsia,2025-12-28 21:00,"Club night featuring progressive & melodic EDM."
+E2005,Guangzhou Jazz Lounge,Blue South Trio,jazz,Guangzhou,CN,EastAsia,2025-12-18 20:30,"Cozy jazz night with modern standards."
+E3001,Tokyo Indie Live,Indie Circle,indie,Tokyo,JP,EastAsia,2025-12-10 19:00,"Indie bands from Tokyo underground scene."
+E3002,Seoul Jazz Night,Blue Seoul,jazz,Seoul,KR,EastAsia,2025-12-15 20:00,"Modern jazz in a cozy club."
+E3003,Singapore Sunset Rave,DJ Nova,edm,Singapore,SG,SoutheastAsia,2025-12-18 19:30,"Sunset beach rave with melodic EDM."
+E3004,Bangkok City Beats,Various Artists,pop,Bangkok,TH,SoutheastAsia,2025-12-22 20:00,"Pop & dance hits all night."

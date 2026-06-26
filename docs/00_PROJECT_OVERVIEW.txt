@@ -1,0 +1,85 @@
+# Backstage Pass – Phase 1 Prototype (v0.1)
+
+## Goal (MVP demo)
+Discover Event → Ask Chatbot → Buy Ticket → Ticket in Wallet (Web3 style) → QR Check-in (mock) → Fraud Risk Warning
+
+## Current Status
+- AI service: FastAPI /ask working (bilingual + RAG + hybrid retrieval + logging)
+- Fraud: rule-based risk level + warning UX (basic)
+- Data: events.csv + faq.md + policy.md
+
+## This Month Focus
+- Build Web UI (Next.js) based on Figma
+- Add Supabase as backend replacement (no backend teammate)
+- Implement mock NFT ticket wallet + basic purchase + check-in
+
+(DETAILED VERSION)
+# Backstage Pass – Web3 Concert Ticketing Platform
+
+## Project Vision
+Backstage Pass is a Web3-ready concert discovery and ticketing platform designed to enhance fan engagement and simplify digital ticket ownership.
+
+The system integrates:
+- AI chatbot assistant
+- event discovery
+- simulated NFT ticket wallet
+- fan community interaction
+- fraud detection
+
+The long-term goal is to transition from simulated digital tickets to real NFT tickets.
+
+---
+
+## Phase 1 Goal (Prototype)
+
+The prototype demonstrates the core user journey:
+
+Discover Event  
+→ Ask AI Assistant  
+→ Buy Ticket  
+→ Store Ticket in Wallet  
+→ QR Check-in (mock)
+
+Blockchain functionality is simulated in Phase 1.
+
+---
+
+## Target Users
+
+- Music fans discovering concerts
+- Event organizers promoting shows
+- Urban newcomers looking for social music experiences
+
+---
+
+## Key Features
+
+1. Event Discovery
+2. AI Chatbot Assistant
+3. Simulated Ticket Wallet (NFT-style)
+4. Fan Engagement
+5. Fraud Detection
+6. Reward Simulation
+
+---
+
+## Technology Stack
+
+Frontend  
+- Next.js
+
+Backend (replacement)  
+- Supabase
+
+AI Service  
+- FastAPI (RAG-based chatbot)
+
+Database  
+- Supabase PostgreSQL
+
+Storage  
+- Supabase Storage
+
+Future Phase  
+- Web3 wallet integration
+- NFT ticket minting

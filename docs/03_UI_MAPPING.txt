@@ -1,0 +1,59 @@
+# UI Mapping v0.1 (Figma → Next.js → APIs)
+
+## Pages
+P1 Event List
+- UI: filters (city/genre/date), EventCard grid/list
+- Data: Supabase events
+- Actions:
+  - open detail: route /events/[event_id]
+  - open chat: ChatDrawer (calls AI /ask)
+
+P2 Event Detail
+- UI: poster, info, Buy button, FAQ quick chips
+- Data: Supabase events (single)
+- Actions:
+  - Buy: calls Fraud check (AI /fraud/eval) then Supabase RPC create_order
+  - Chat: /ask
+
+P3 Checkout (modal/page)
+- UI: qty selector, total, confirm
+- Actions:
+  - confirm: Supabase RPC (atomic stock update + order + ticket)
+
+P4 Wallet (NFT Gallery)
+- UI: card grid (like OpenSea)
+  - TicketCard shows: title, date, city, token_id short, status badge
+- Data: Supabase tickets (by user)
+- Actions:
+  - open ticket detail: /wallet/[ticket_id]
+
+P5 Ticket Detail
+- UI: QR code + metadata, status, "Mark as used" (demo check-in)
+- Data: Supabase tickets
+- Actions:
+  - check-in: update ticket.status = "used"
+
+P6 Chat Drawer (global component)
+- UI: input + suggestions + answer + citations + risk banner
+- API: AI POST /ask
+
+P7 Risk Warning Modal (component)
+- Trigger: risk_level = medium/high
+- Action:
+  - medium: warn user, allow continue
+  - high: block purchase, show appeal button
+
+P8 Appeal Form (optional)
+- Data: Supabase appeals insert
+
+## Chat Drawer
+
+Global chatbot UI.
+
+API
+POST /ask
+
+Displays
+answer
+citations
+risk warnings

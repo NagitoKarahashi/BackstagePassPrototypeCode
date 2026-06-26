@@ -1,0 +1,44 @@
+# DB Schema v0.1 (Supabase)
+
+## events
+- event_id (text, pk)
+- title (text)
+- artist (text)
+- genre (text)
+- city (text)
+- start_time (timestamp)
+- desc (text)
+- price (numeric)
+- stock_total (int)
+- stock_left (int)
+- poster_url (text, nullable)
+
+## orders
+- id (uuid, pk)
+- user_id (uuid/text)
+- event_id (text)
+- qty (int)
+- total_amount (numeric)
+- status (text)  -- paid/cancelled
+- created_at (timestamp)
+
+## tickets  (mock NFT)
+- id (uuid, pk)
+- user_id
+- order_id
+- event_id
+- token_id (text)         -- mock token id
+- contract_address (text) -- mock contract
+- chain (text)            -- e.g. "Polygon Testnet"
+- metadata (jsonb)
+- qr_payload (text)
+- status (text)           -- active/used/expired
+- created_at (timestamp)
+
+## appeals (optional)
+- id (uuid, pk)
+- user_id
+- order_id (nullable)
+- reason (text)
+- status (text) -- open/approved/rejected
+- created_at

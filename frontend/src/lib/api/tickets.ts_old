@@ -1,0 +1,16 @@
+'use client';
+
+import { apiClient } from './client';
+import type { Ticket } from '@/lib/types';
+
+export function getMyTickets(userId: string) {
+  return apiClient.get<unknown>('/tickets/my', { user_id: userId });
+}
+
+export function getTicketById(ticketId: string) {
+  return apiClient.get<Ticket>(`/tickets/${ticketId}`);
+}
+
+export function getTicketQr(ticketId: string) {
+  return apiClient.get<Record<string, unknown>>(`/tickets/${ticketId}/qr`);
+}

@@ -1,0 +1,55 @@
+# Current Status
+
+Version 0.1
+
+---
+
+## Completed
+
+AI Chatbot
+- FastAPI service running
+- RAG retrieval system
+- TF-IDF search
+- bilingual support
+
+Fraud Detection
+- basic rule scoring
+- warning messages
+
+Knowledge Base
+- events.csv
+- faq.md
+- policy.md
+
+---
+
+## In Progress
+
+Frontend
+- Next.js integration
+- Figma UI implementation
+
+Backend
+- Supabase schema design
+- simulated NFT ticket system
+
+---
+
+## Next Steps
+
+1. Implement Event List UI
+2. Implement Wallet Gallery UI
+3. Connect chatbot to frontend
+4. Create purchase workflow
+5. Implement QR check-in
+6. Add appeal system
+
+---
+
+## Known Limitations
+
+No real blockchain integration yet.
+
+Ticket NFT is simulated in Phase 1.
+
+Scalability and load testing still required.

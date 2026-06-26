@@ -1,0 +1,48 @@
+# API Contract v0.1 (AI + App)
+
+## AI Service (FastAPI) base
+- Base URL (local): http://127.0.0.1:8000
+
+### POST /ask
+Request:
+{
+  "question": "string",
+  "context": { "city": "string", "liked_tags": ["string"], "user_id":"string?", "ip":"string?" },
+  "lang": "auto|en|zh"?
+}
+
+Response:
+{
+  "answer": "string",
+  "citations": ["string"],
+  "scores": [number],
+  "intent": "string",
+  "lang": "en|zh",
+  "risk": { "risk_level":"low|medium|high", "reasons":[string], "action":"allow|warn|block" }?
+}
+
+### POST /fraud/eval  (optional if you embed in /ask or /order)
+Request:
+{
+  "user_id":"string",
+  "ip":"string",
+  "event_id":"string",
+  "qty": number,
+  "payment_amount": number,
+  "user_agent": "string"?
+}
+Response:
+{
+  "risk_level":"low|medium|high",
+  "reasons":[string],
+  "action":"allow|warn|block",
+  "message":"string"
+}
+
+## App Backend (Supabase)
+We use Supabase for:
+- Auth (user_id)
+- Events
+- Orders
+- Tickets (mock NFT)
+- Appeals (optional)

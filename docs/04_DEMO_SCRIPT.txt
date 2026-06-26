@@ -1,0 +1,10 @@
+# Demo Script (v0.1)
+
+1) Open Event List: filter by city/genre
+2) Open Event Detail: show info
+3) Open Chat Drawer: ask "Is this event suitable for me?"
+4) Click Buy: show risk warning (medium/high demo)
+5) Confirm purchase: ticket appears in Wallet gallery
+6) Open Ticket Detail: show QR + token_id + chain
+7) Mark as used (mock check-in)
+8) Show logs: unanswered questions captured for FAQ improvement

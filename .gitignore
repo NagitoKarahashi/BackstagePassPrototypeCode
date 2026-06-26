@@ -1,0 +1,39 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+*.tmp
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Backend env
+ai-service/.env
+ai-service/venv/
+ai-service/.venv/
+ai-service/__pycache__/
+
+# Frontend env/build
+backstage-pass-frontend-starter/.env.local
+backstage-pass-frontend-starter/.next/
+backstage-pass-frontend-starter/node_modules/
+backstage-pass-frontend-starter/out/
+backstage-pass-frontend-starter/dist/
+
+# Root node modules
+node_modules/
+
+# Archives
+*.zip
+*.rar
+*.7z

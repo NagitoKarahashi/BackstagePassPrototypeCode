@@ -1,0 +1,66 @@
+# System Architecture
+
+## Overview
+
+The system is divided into three main components.
+
+1. Frontend (Next.js)
+2. AI Service (FastAPI)
+3. Backend Infrastructure (Supabase)
+
+---
+
+## Architecture Diagram (Conceptual)
+
+Frontend (Next.js)
+│
+├── Event Discovery
+├── Wallet Interface
+├── Ticket Purchase
+├── Chatbot UI
+│
+│
+└── communicates with
+
+AI Service (FastAPI)
+│
+├── RAG Chatbot
+├── Recommendation Logic
+├── Fraud Detection
+├── FAQ Logging
+│
+│
+└── communicates with
+
+Supabase
+│
+├── Events
+├── Orders
+├── Tickets
+├── User Profiles
+└── Appeals
+
+AI System
+
+The AI service includes:
+	•	Retrieval Augmented Generation (RAG)
+	•	TF-IDF retrieval
+	•	hybrid ranking
+	•	bilingual query support
+	•	FAQ logging
+	•	fraud detection scoring
+
+⸻
+
+Ticket System
+
+Phase 1 uses simulated NFT tickets.
+
+Each ticket contains:
+	•	token_id
+	•	contract_address
+	•	chain
+	•	metadata
+	•	QR verification payload
+
+These values simulate NFT structure and can be replaced by real blockchain minting in Phase 2.
