@@ -1,10 +1,11 @@
 <<<<<<< HEAD
 # BackstagePassPrototypeCode
-Backstage Pass Prototype Codes for illustration
 =======
 # Backstage Pass
 
+All coded by Tan Zhi
 Backstage Pass is an AI + Web3-inspired event ticketing and fan engagement system.
+This repository is the Backstage Pass project's prototype codes resources. Illustration Only, Not used in vercel or render.
 
 ## Project Structure
 
