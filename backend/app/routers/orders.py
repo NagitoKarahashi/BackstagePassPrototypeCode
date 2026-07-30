@@ -27,10 +27,18 @@ def create_order(
 
 
 @router.post("/{order_id}/pay")
-def pay_order(order_id: str, sb: Client = Depends(supabase_dep)):
-    return pay_order_service(sb, order_id)
+def pay_order(
+    order_id: str,
+    current_user=Depends(current_user_dep),
+    sb: Client = Depends(supabase_dep),
+):
+    return pay_order_service(sb, current_user.id, order_id)
 
 
 @router.post("/{order_id}/cancel")
-def cancel_order(order_id: str, sb: Client = Depends(supabase_dep)):
-    return cancel_order_service(sb, order_id)
+def cancel_order(
+    order_id: str,
+    current_user=Depends(current_user_dep),
+    sb: Client = Depends(supabase_dep),
+):
+    return cancel_order_service(sb, current_user.id, order_id)

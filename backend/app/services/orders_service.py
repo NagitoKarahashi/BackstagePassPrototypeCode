@@ -90,7 +90,25 @@ def create_order_service(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def pay_order_service(sb, order_id):
+def _get_owned_order(sb, external_auth_id: str, order_id: str):
+    internal_user_id = resolve_internal_user_id(sb, external_auth_id)
+    response = (
+        sb.table("orders")
+        .select("id,user_id,status")
+        .eq("id", order_id)
+        .eq("user_id", str(internal_user_id))
+        .limit(1)
+        .execute()
+    )
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Order not found for current user")
+    return response.data[0]
+
+
+def pay_order_service(sb, external_auth_id: str, order_id: str):
+    owned_order = _get_owned_order(sb, external_auth_id, order_id)
+    if str(owned_order.get("status") or "").lower() not in {"created", "pending"}:
+        raise HTTPException(status_code=409, detail="Only an unpaid order can be paid")
     try:
         res = sb.rpc(
             "pay_order_and_issue_tickets",
@@ -153,7 +171,11 @@ def pay_order_service(sb, order_id):
         raise HTTPException(status_code=400, detail=str(e))   
 
 
-def cancel_order_service(sb, order_id):
+def cancel_order_service(sb, external_auth_id: str, order_id: str):
+    owned_order = _get_owned_order(sb, external_auth_id, order_id)
+    if str(owned_order.get("status") or "").lower() not in {"created", "pending"}:
+        raise HTTPException(status_code=409, detail="Only an unpaid order can be cancelled")
+
     try:
         res = sb.rpc(
             "cancel_order_and_restore_stock",

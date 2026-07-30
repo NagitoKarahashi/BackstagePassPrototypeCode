@@ -9,9 +9,18 @@ from app.services.intent_service import (
     classify_intent,
     expand_query_by_intent,
 )
-from app.services.recommendation_service import (
-    recommend_events,
-    format_recommendations,
+from app.services.chatbot_events_service import (
+    build_purchase_action,
+    event_to_assistant_card,
+    extract_ticket_quantity,
+    find_chatbot_events,
+    format_artist_overview,
+    format_event_details,
+    format_live_recommendations,
+    is_artist_info_request,
+    is_event_detail_request,
+    is_generic_event_search,
+    is_purchase_request,
 )
 from app.services.retrieval_service import retriever
 from app.services.support_service import answer_support_question
@@ -108,6 +117,8 @@ def build_next_actions(intent: str, risk_ctx: Dict[str, Any], lang: str) -> List
                 if high_risk
                 else ["查看转票规则", "开始转票"]
             )
+        if intent == "artist_info":
+            return ["打开艺人页", "查看该艺人的活动", "购买门票"]
         if intent == "event_search":
             return ["查看推荐演出", "按城市筛选", "按类型筛选"]
         return ["查看 FAQ", "联系人工客服"]
@@ -120,15 +131,21 @@ def build_next_actions(intent: str, risk_ctx: Dict[str, Any], lang: str) -> List
             if high_risk
             else ["View transfer rules", "Start transfer"]
         )
+    if intent == "artist_info":
+        return ["Open artist page", "View artist events", "Buy tickets"]
     if intent == "event_search":
         return ["View recommended events", "Filter by city", "Filter by genre"]
     return ["View FAQ", "Contact support"]
 
 
-def _build_risk_ctx(user_ctx: Dict[str, Any], lang: str) -> Dict[str, Any]:
-    if user_ctx.get("_sb"):
+def _build_risk_ctx(
+    user_ctx: Dict[str, Any],
+    lang: str,
+    sb: Any = None,
+) -> Dict[str, Any]:
+    if sb is not None:
         return evaluate_risk_context(
-            sb=user_ctx.get("_sb"),
+            sb=sb,
             payload=user_ctx,
             lang=lang,
         )
@@ -176,14 +193,18 @@ def _safe_clean_primary_answer(results: List[Dict[str, Any]], lang: str) -> str:
     )
 
 
-def answer_question(req: AskRequest) -> Dict[str, Any]:
+def answer_question(req: AskRequest, sb: Any) -> Dict[str, Any]:
     lang = detect_language(req.question)
-    corrected = correct_spelling_en(req.question) if lang == "en" else req.question
-    q_norm = normalize_question(corrected)
+
+    # Keep the original wording for catalogue, artist and purchase matching.
+    # TextBlob-style spelling correction can corrupt proper nouns such as
+    # "Luna Echo", "Hong Kong" and "Post Malone". Conservative correction is
+    # therefore applied only later, inside the FAQ/policy retrieval branch.
+    q_norm = normalize_question(req.question)
 
     user_ctx = req.context or {}
     intent = classify_intent(q_norm)
-    risk_ctx = _build_risk_ctx(user_ctx, lang)
+    risk_ctx = _build_risk_ctx(user_ctx, lang, sb=sb)
 
     # 1) 高风险转票直接拦截
     if intent == "transfer" and should_block_transfer_like_action(risk_ctx):
@@ -207,42 +228,199 @@ def answer_question(req: AskRequest) -> Dict[str, Any]:
             "next_actions": build_next_actions(intent, risk_ctx, lang),
         }
 
-    # 2) 先走 support 问答（订单、退款状态等强结构化支持问题）
-    support_result = answer_support_question(q_norm, user_ctx, lang)
-    if support_result:
-        core_answer = support_result["answer"]
+    # 2) 购票请求先返回确认动作，不在自然语言请求阶段写数据库
+    if is_purchase_request(q_norm):
+        quantity = extract_ticket_quantity(q_norm)
+        events = find_chatbot_events(
+            sb,
+            q_norm,
+            user_ctx,
+            only_available=True,
+            allow_upcoming_fallback=is_generic_event_search(q_norm),
+            limit=5,
+        )
+
+        if not events:
+            answer = (
+                "没有找到与你的购票请求匹配、且当前仍可购买的活动。请告诉我活动名称、艺人或城市。"
+                if lang == "zh"
+                else "I couldn't find an on-sale event matching your purchase request. Please provide an event title, artist, or city."
+            )
+            if risk_ctx["risk_level"] in ("medium", "high"):
+                answer = prepend_risk_banner(answer, risk_ctx, lang)
+
+            return {
+                "answer": answer,
+                "citations": [],
+                "scores": [],
+                "intent": "purchase",
+                "lang": lang,
+                "risk_level": risk_ctx["risk_level"],
+                "risk_score": risk_ctx["risk_score"],
+                "risk_type": risk_ctx["risk_type"],
+                "risk_reasons": risk_ctx["reasons"],
+                "recommended_action": risk_ctx["recommended_action"],
+                "answer_mode": "purchase_event_not_found",
+                "events": [],
+                "action": None,
+                "next_actions": (
+                    ["查看近期活动", "按城市筛选"]
+                    if lang == "zh"
+                    else ["View upcoming events", "Filter by city"]
+                ),
+            }
+
+        action = build_purchase_action(events, quantity, lang)
+        cards = [event_to_assistant_card(event) for event in events]
+        if len(events) == 1:
+            answer = (
+                f"我找到了 {events[0].get('title') or '这场活动'}。请核对下方活动和 {quantity} 张票的模拟订单，再点击确认。"
+                if lang == "zh"
+                else f"I found {events[0].get('title') or 'the event'}. Review the event and the mock order for {quantity} ticket(s), then confirm."
+            )
+        else:
+            answer = (
+                f"我找到了几场可能相关的活动。请选择一场，再确认购买 {quantity} 张票。"
+                if lang == "zh"
+                else f"I found several possible events. Choose one, then confirm the mock purchase for {quantity} ticket(s)."
+            )
+
         if risk_ctx["risk_level"] in ("medium", "high"):
-            core_answer = prepend_risk_banner(core_answer, risk_ctx, lang)
+            answer = prepend_risk_banner(answer, risk_ctx, lang)
 
         return {
-            "answer": core_answer,
-            "citations": [support_result["source"]],
-            "scores": [support_result["score"]],
-            "intent": intent,
+            "answer": answer,
+            "citations": [f"event://{event.get('id')}" for event in events],
+            "scores": [1.0 for _ in events],
+            "intent": "purchase",
             "lang": lang,
             "risk_level": risk_ctx["risk_level"],
             "risk_score": risk_ctx["risk_score"],
             "risk_type": risk_ctx["risk_type"],
             "risk_reasons": risk_ctx["reasons"],
             "recommended_action": risk_ctx["recommended_action"],
-            "answer_mode": "support_answer",
-            "next_actions": build_next_actions(intent, risk_ctx, lang),
+            "answer_mode": action["type"],
+            "events": cards,
+            "action": action,
+            "next_actions": (
+                ["确认模拟购票", "选择其他活动"]
+                if lang == "zh"
+                else ["Confirm mock purchase", "Choose another event"]
+            ),
         }
 
-    # 3) 演出推荐分支
+    # 3) 艺人介绍：基于 Supabase 当前活动资料生成，不虚构外部履历
+    if intent == "artist_info" or is_artist_info_request(q_norm):
+        events = find_chatbot_events(
+            sb,
+            q_norm,
+            user_ctx,
+            only_available=False,
+            allow_upcoming_fallback=False,
+            include_past=True,
+            limit=8,
+        )
+        if events:
+            answer = format_artist_overview(events, lang)
+            if risk_ctx["risk_level"] in ("medium", "high"):
+                answer = prepend_risk_banner(answer, risk_ctx, lang)
+            return {
+                "answer": answer,
+                "citations": [f"event://{event.get('id')}" for event in events],
+                "scores": [1.0 for _ in events],
+                "intent": "artist_info",
+                "lang": lang,
+                "risk_level": risk_ctx["risk_level"],
+                "risk_score": risk_ctx["risk_score"],
+                "risk_type": risk_ctx["risk_type"],
+                "risk_reasons": risk_ctx["reasons"],
+                "recommended_action": risk_ctx["recommended_action"],
+                "answer_mode": "artist_overview",
+                "events": [event_to_assistant_card(event) for event in events],
+                "action": None,
+                "next_actions": build_next_actions("artist_info", risk_ctx, lang),
+            }
+
+        answer = (
+            "当前活动数据库中没有找到对应艺人的资料。请提供艺人名称，或先打开一场相关活动再询问。"
+            if lang == "zh"
+            else "I couldn't find that artist in the current event catalogue. Provide the artist name, or open a related event and ask again."
+        )
+        return {
+            "answer": answer,
+            "citations": [],
+            "scores": [],
+            "intent": "artist_info",
+            "lang": lang,
+            "risk_level": risk_ctx["risk_level"],
+            "risk_score": risk_ctx["risk_score"],
+            "risk_type": risk_ctx["risk_type"],
+            "risk_reasons": risk_ctx["reasons"],
+            "recommended_action": risk_ctx["recommended_action"],
+            "answer_mode": "artist_not_found",
+            "events": [],
+            "action": None,
+            "next_actions": build_next_actions("artist_info", risk_ctx, lang),
+        }
+
+    # 4) 当前活动详情：优先读取 Supabase 中的真实活动记录
+    has_current_event = bool(
+        user_ctx.get("selected_event_id") or user_ctx.get("current_event_id")
+    )
+    if is_event_detail_request(q_norm) or (
+        has_current_event and intent in {"price", "venue_info"}
+    ):
+        events = find_chatbot_events(
+            sb,
+            q_norm,
+            user_ctx,
+            only_available=False,
+            allow_upcoming_fallback=False,
+            include_past=True,
+            limit=3,
+        )
+        if events:
+            answer = format_event_details(events, lang)
+            if risk_ctx["risk_level"] in ("medium", "high"):
+                answer = prepend_risk_banner(answer, risk_ctx, lang)
+            return {
+                "answer": answer,
+                "citations": [f"event://{event.get('id')}" for event in events],
+                "scores": [1.0 for _ in events],
+                "intent": intent,
+                "lang": lang,
+                "risk_level": risk_ctx["risk_level"],
+                "risk_score": risk_ctx["risk_score"],
+                "risk_type": risk_ctx["risk_type"],
+                "risk_reasons": risk_ctx["reasons"],
+                "recommended_action": risk_ctx["recommended_action"],
+                "answer_mode": "event_details",
+                "events": [event_to_assistant_card(event) for event in events],
+                "action": None,
+                "next_actions": (
+                    ["购买门票", "查看其他活动"]
+                    if lang == "zh"
+                    else ["Buy tickets", "View other events"]
+                ),
+            }
+
+    # 5) 演出推荐分支改为读取 Supabase，不再读取 events.csv
     if intent == "event_search":
-        recs = recommend_events(q_norm, user_ctx)
+        event_limit = 3 if risk_ctx["risk_level"] == "high" else 4 if risk_ctx["risk_level"] == "medium" else 5
+        events = find_chatbot_events(
+            sb,
+            q_norm,
+            user_ctx,
+            only_available=True,
+            allow_upcoming_fallback=is_generic_event_search(q_norm),
+            limit=event_limit,
+        )
 
-        if risk_ctx["risk_level"] == "high":
-            recs = recs[:3]
-        elif risk_ctx["risk_level"] == "medium":
-            recs = recs[:4]
-
-        if not recs:
+        if not events:
             answer = (
-                "在当前数据集中，没有找到与你条件匹配的近期演出。你可以尝试更换城市、时间范围或音乐类型再试一次。"
+                "当前活动数据库中没有找到与你条件匹配、且仍可购票的近期活动。你可以尝试更换城市、艺人或音乐类型。"
                 if lang == "zh"
-                else "I couldn't find any upcoming events that match your query in the current dataset. Please try another city, date range, or genre."
+                else "I couldn't find an upcoming on-sale event matching your query in the current catalogue. Try another city, artist, or genre."
             )
             if risk_ctx["risk_level"] in ("medium", "high"):
                 answer = prepend_risk_banner(answer, risk_ctx, lang)
@@ -259,17 +437,19 @@ def answer_question(req: AskRequest) -> Dict[str, Any]:
                 "risk_reasons": risk_ctx["reasons"],
                 "recommended_action": risk_ctx["recommended_action"],
                 "answer_mode": "event_recommendation_empty",
+                "events": [],
+                "action": None,
                 "next_actions": build_next_actions(intent, risk_ctx, lang),
             }
 
-        answer = format_recommendations(recs, lang=lang)
+        answer = format_live_recommendations(events, lang=lang)
         if risk_ctx["risk_level"] in ("medium", "high"):
             answer = prepend_risk_banner(answer, risk_ctx, lang)
 
         return {
             "answer": answer,
-            "citations": [f"event://{r['event_id']}" for r in recs],
-            "scores": [r["score"] for r in recs],
+            "citations": [f"event://{event.get('id')}" for event in events],
+            "scores": [1.0 for _ in events],
             "intent": intent,
             "lang": lang,
             "risk_level": risk_ctx["risk_level"],
@@ -278,11 +458,43 @@ def answer_question(req: AskRequest) -> Dict[str, Any]:
             "risk_reasons": risk_ctx["reasons"],
             "recommended_action": risk_ctx["recommended_action"],
             "answer_mode": "event_recommendation",
+            "events": [event_to_assistant_card(event) for event in events],
+            "action": None,
             "next_actions": build_next_actions(intent, risk_ctx, lang),
         }
 
-    # 4) FAQ / policy 普通检索分支
-    search_query = expand_query_by_intent(intent, q_norm, lang=lang)
+    # 6) 结构化支持问题（订单、退款状态等）
+    support_result = answer_support_question(q_norm, user_ctx, lang)
+    if support_result:
+        answer = support_result["answer"]
+        if risk_ctx["risk_level"] in ("medium", "high"):
+            answer = prepend_risk_banner(answer, risk_ctx, lang)
+
+        return {
+            "answer": answer,
+            "citations": [support_result["source"]],
+            "scores": [support_result["score"]],
+            "intent": intent,
+            "lang": lang,
+            "risk_level": risk_ctx["risk_level"],
+            "risk_score": risk_ctx["risk_score"],
+            "risk_type": risk_ctx["risk_type"],
+            "risk_reasons": risk_ctx["reasons"],
+            "recommended_action": risk_ctx["recommended_action"],
+            "answer_mode": "support_answer",
+            "next_actions": build_next_actions(intent, risk_ctx, lang),
+        }
+
+    # 7) FAQ / policy 普通检索分支
+    # English spelling correction remains useful for policy questions, but it
+    # must not run before event/artist matching because proper nouns are easily
+    # rewritten into unrelated common words.
+    faq_question = (
+        normalize_question(correct_spelling_en(req.question))
+        if lang == "en"
+        else q_norm
+    )
+    search_query = expand_query_by_intent(intent, faq_question, lang=lang)
     alpha = 0.5 if lang == "zh" else 0.6
 
     # 4.1 先只查 FAQ / policy

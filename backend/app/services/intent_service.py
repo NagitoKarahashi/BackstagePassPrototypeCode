@@ -33,6 +33,14 @@ def classify_intent(q: str) -> str:
         return "entry"
     if any(k in q for k in ["票价", "多少钱", "价格", "贵不贵", "服务费", "手续费", "加价", "差价", "优惠", "折扣", "学生票", "vip票", "早鸟", "预售"]) or any(k in q_low for k in ["price", "how much", "ticket cost", "service fee", "extra fee", "discount", "student", "vip", "early bird", "presale"]):
         return "price"
+    if any(k in q for k in [
+        "介绍艺人", "介绍歌手", "介绍一下艺人", "介绍一下歌手",
+        "艺人是谁", "歌手是谁", "了解艺人", "了解歌手",
+    ]) or any(k in q_low for k in [
+        "tell me about the artist", "introduce the artist",
+        "who is the artist", "artist profile", "about this artist",
+    ]):
+        return "artist_info"
     if any(k in q for k in ["在哪里", "在哪儿", "位置", "地点", "地址", "场馆", "怎么去", "怎么到", "怎么到达", "路线", "地铁", "地铁站", "出口", "几点开始", "什么时候开始", "几点入场", "几点开演", "演出时间"]) or any(k in q_low for k in ["where is the venue", "location", "address", "how to get there", "how do i get there", "when does it start", "what time", "start time", "show time"]):
         return "venue_info"
     if any(k in q for k in ["演出", "音乐会", "演唱会", "live", "活动", "音乐节", "推荐", "有什么好看的", "有什么演出", "看什么", "附近有什么", "附近的演出", "最近有什么演出"]) or any(k in q_low for k in ["show", "concert", "event", "festival", "live", "any events", "what to watch", "recommend", "near me", "gigs", "shows near"]):
