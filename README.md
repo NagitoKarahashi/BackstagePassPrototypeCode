@@ -1,381 +1,236 @@
-# Backstage Pass Prototype Code
+# Backstage Pass
 
-Backstage Pass is an AI + Web3-inspired event ticketing and fan engagement platform developed as a graduation project prototype.
+Backstage Pass is an AI-assisted, risk-aware, Web3-ready event ticketing prototype developed as a graduation project. It combines event discovery, conversational support, simulated ticket purchasing, a digital ticket wallet, QR check-in, fan engagement, and rule-based fraud controls.
 
-This repository contains the organized prototype code and supporting documentation for academic review and illustration purposes. It is **not directly connected to the active Vercel or Render deployment repositories**.
+> This is a prototype, not a production ticketing platform. Payments, NFT minting, blockchain transactions, and settlement are simulated.
 
-## Project Overview
-
-Backstage Pass aims to improve the event ticketing experience by combining concert discovery, digital ticket ownership, fan engagement, AI assistance, and risk-aware ticket operations.
-
-The Phase 1 prototype demonstrates the following core user journey:
+## Core User Journey
 
 ```text
-Discover Event
-→ Ask AI Assistant
-→ Buy Ticket
-→ Store Ticket in Wallet
-→ QR Check-in
-→ Fraud Risk Warning
+Sign in with Privy
+→ Browse or ask about events
+→ Confirm a simulated purchase
+→ Receive a digital ticket
+→ View wallet and QR code
+→ Check in, transfer, refund, or list the ticket
 ```
 
-Blockchain/NFT functionality is simulated in this prototype stage. The ticket wallet and token-related fields are designed to represent a Web3-style user experience and can be extended into real NFT minting in later phases.
+## Main Features
 
-## Key Features
+| Area | Current implementation |
+| --- | --- |
+| Authentication | Privy login with FastAPI bearer-token validation and profile bootstrap |
+| Event discovery | Supabase-backed event list, filters, details, and recommendations |
+| AI assistant | English/Chinese handling, spelling normalization, intent classification, TF-IDF + BM25 retrieval, live event search, and structured event responses |
+| Chatbot purchase flow | Event selection and order confirmation before any database write; authenticated confirmation uses the existing simulated order and ticket flow |
+| Orders and tickets | Atomic order creation, simulated payment, ticket issuance, cancellation, wallet views, and QR payloads |
+| Ticket lifecycle | Check-in, transfer, refund, ownership history, and marketplace listing/buy/cancel operations |
+| Risk and fraud | Rule-based low/medium/high risk decisions with warnings, review requirements, or blocking |
+| Fan engagement | Event chat, rewards, badges, artist follows, notifications, and support enquiries |
+| Web3-ready fields | Simulated token ID, contract, chain, mint status, and transaction hash |
 
-### Event Discovery
+## Architecture
 
-Users can browse available events, view event details, and access recommended or popular events.
+```text
+Next.js / React frontend
+        ↓ Privy access token
+FastAPI REST API
+        ↓
+Supabase / PostgreSQL + transactional RPC functions
 
-### Ticket Ordering
-
-The system supports a basic ticket purchase flow, including order creation, payment confirmation, cancellation, and ticket generation.
-
-### Ticket Wallet
-
-Purchased tickets are stored in a digital wallet-style interface. Each ticket can contain NFT-style metadata such as token ID, contract address, chain information, and QR verification payload.
-
-### QR Check-in
-
-The prototype includes a QR-based ticket verification and check-in flow. This is implemented as a mock or prototype-level check-in mechanism for demonstration purposes.
-
-### AI Chatbot Assistant
-
-The AI assistant provides event-related and policy-related support using a retrieval-based approach. It supports FAQ/policy retrieval, intent classification, bilingual query handling, and response generation based on available project data.
-
-### Fan Engagement
-
-The prototype includes user-facing engagement functions such as chat, artist following, rewards, notifications, and user profile-related features.
-
-### Risk / Fraud Detection
-
-The system includes a rule-based risk scoring module for detecting potentially suspicious actions, such as risky ticket transfer, abnormal check-in behavior, refund patterns, or other fraud-related signals.
+Assistant data:
+Supabase events + local FAQ/policy knowledge base + TF-IDF/BM25 index
+```
 
 ## Technology Stack
 
-### Frontend
-
-* Next.js
-* TypeScript
-* Tailwind CSS
-* Supabase client integration
-* API wrapper structure for frontend-backend communication
-
-### Backend
-
-* FastAPI
-* Python
-* Supabase / PostgreSQL
-* Pydantic
-* REST API design
-* Rule-based risk scoring
-* RAG-style chatbot support
-
-### AI / Retrieval Components
-
-* TF-IDF retrieval
-* BM25 / hybrid ranking
-* FAQ and policy document retrieval
-* Intent classification
-* Bilingual support
-* Optional vector database dependencies for future extension
-
-### Database / Infrastructure
-
-* Supabase PostgreSQL
-* Supabase project environment variables
-* Render / Vercel deployment used in the live prototype environment, but not directly controlled by this repository
+- Frontend: Next.js 15, React 19, TypeScript, Privy React SDK, Tailwind CSS
+- Backend: FastAPI, Python, Pydantic, Supabase Python client
+- Database: Supabase PostgreSQL
+- Retrieval: scikit-learn TF-IDF, BM25, local FAQ and policy sources
+- Deployment: Vercel frontend, Render backend, Supabase data platform
 
 ## Repository Structure
 
 ```text
-BackstagePassPrototypeCode/
+.
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   ├── config/
-│   │   ├── core/
-│   │   ├── db/
-│   │   ├── routers/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   ├── main.py
-│   │   ├── rag_core.py
-│   │   └── temporary_auth.py
-│   ├── data/
-│   ├── eval/
-│   ├── migration_reference/
-│   ├── sql/
-│   ├── tests/
-│   ├── ui_demo/
-│   ├── vectordb/
-│   ├── .env.example
-│   ├── requirements.txt
-│   └── README.md
-│
+│   │   ├── core/        # Settings, authentication, shared dependencies
+│   │   ├── db/          # Supabase client
+│   │   ├── routers/     # FastAPI endpoints
+│   │   ├── schemas/     # Pydantic request/response models
+│   │   ├── services/    # Business logic and database workflows
+│   │   └── main.py      # Application entry point
+│   ├── data/            # FAQ, policy, and legacy catalogue assets
+│   ├── sql/             # Baseline schema and database functions
+│   ├── tests/           # Test and smoke-check resources
+│   └── requirements.txt
 ├── frontend/
-│   ├── docs/
-│   ├── src/
-│   │   ├── app/
-│   │   ├── components/
-│   │   └── lib/
-│   ├── .env.example
-│   ├── package.json
-│   ├── next.config.mjs
-│   ├── tsconfig.json
-│   └── README.md
-│
-├── docs/
-│   ├── 00_PROJECT_OVERVIEW.txt
-│   ├── 01_API_CONTRACT.txt
-│   ├── 02_DB_SCHEMA.txt
-│   ├── 03_UI_MAPPING.txt
-│   ├── 04_DEMO_SCRIPT.txt
-│   ├── 05_CURRENT_STATUS.txt
-│   └── 06_ARCHITECTURE.txt
-│
-├── .gitignore
-├── package.json
-└── README.md
+│   ├── src/app/         # Next.js routes
+│   ├── src/components/  # Shared and feature components
+│   ├── src/lib/api/     # FastAPI client wrappers
+│   └── package.json
+└── docs/                # Project, API, database, architecture, and demo notes
 ```
 
-## Documentation
+## Local Setup
 
-The `docs/` folder contains project-level documentation for academic review:
-
-* `00_PROJECT_OVERVIEW.txt` — project goal, MVP flow, key features, and technology stack
-* `01_API_CONTRACT.txt` — API contract and endpoint design
-* `02_DB_SCHEMA.txt` — database schema notes
-* `03_UI_MAPPING.txt` — mapping between UI pages and backend/API functions
-* `04_DEMO_SCRIPT.txt` — demonstration flow
-* `05_CURRENT_STATUS.txt` — current implementation status
-* `06_ARCHITECTURE.txt` — system architecture and component relationship
-
-## Backend Setup
-
-Navigate to the backend folder:
+### 1. Backend
 
 ```bash
 cd backend
-```
-
-Create and activate a Python virtual environment:
-
-```bash
 python -m venv .venv
 ```
 
-For Windows PowerShell:
+Activate the environment:
 
 ```bash
+# Windows PowerShell
 .venv\Scripts\Activate.ps1
-```
 
-For Windows Command Prompt:
-
-```bash
-.venv\Scripts\activate
-```
-
-For macOS/Linux:
-
-```bash
+# macOS/Linux
 source .venv/bin/activate
 ```
 
-Install dependencies:
+Install dependencies and create the environment file:
 
 ```bash
 pip install -r requirements.txt
-```
-
-Create the backend environment file:
-
-```bash
-copy .env.example .env
-```
-
-On macOS/Linux:
-
-```bash
 cp .env.example .env
 ```
 
-Then fill in the required Supabase environment variables.
+On Windows Command Prompt, use `copy .env.example .env` instead of `cp`.
 
-Run the backend locally:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-The local API documentation should then be available at:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-## Frontend Setup
-
-Navigate to the frontend folder:
-
-```bash
-cd frontend
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Create the frontend environment file:
-
-```bash
-copy .env.example .env.local
-```
-
-On macOS/Linux:
-
-```bash
-cp .env.example .env.local
-```
-
-Fill in the required frontend environment variables.
-
-Run the frontend locally:
-
-```bash
-npm run dev
-```
-
-The frontend should then be available at:
-
-```text
-http://localhost:3000
-```
-
-## Environment Variables
-
-Environment variables are intentionally excluded from this repository.
-
-Example files are provided:
-
-```text
-backend/.env.example
-frontend/.env.example
-```
-
-The actual `.env` and `.env.local` files should not be committed.
-
-### Backend Example
+Required backend configuration:
 
 ```env
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_ANON_KEY=
+PRIVY_APP_ID=
+PRIVY_VERIFICATION_KEY=
+CORS_ORIGINS=http://localhost:3000
 ```
 
-### Frontend Example
+Start the API:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+- Health check: `http://127.0.0.1:8000/health`
+- Swagger UI: `http://127.0.0.1:8000/docs`
+
+### 2. Frontend
+
+```bash
+cd frontend
+npm install
+cp .env.example .env.local
+```
+
+Configure the frontend:
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+NEXT_PUBLIC_PRIVY_APP_ID=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-## Main Backend Modules
+Then run:
 
-The backend prototype includes modules for:
-
-* Event APIs
-* Order and booking flow
-* Ticket wallet and QR check-in
-* Chat and fan engagement
-* Rewards
-* Artist following
-* Notifications
-* User profiles
-* AI chatbot / RAG retrieval
-* Risk scoring / fraud detection
-* Supabase integration
-
-## Main Frontend Modules
-
-The frontend prototype includes page and component structures for:
-
-* Login and protected routes
-* Dashboard
-* Event discovery
-* Event details
-* Ticket purchase flow
-* Ticket wallet
-* QR ticket display
-* Chat interface
-* Rewards
-* Artist following
-* Notifications
-* User profile-related pages
-
-## Stress Test Results
-
-Stress test results are stored in a separate repository:
-
-```text
-https://github.com/NagitoKarahashi/BackstagePassStresstest
+```bash
+npm run dev
 ```
 
-The stress test repository should include:
+Open `http://localhost:3000`.
 
-* Test objective
-* Test environment
-* Tested endpoints
-* Test configuration
-* Response time results
-* Failure rate
-* Screenshots
-* Raw or processed result data
+## Chatbot API
 
-## Security Notes
+The current assistant reads live event records from Supabase. The legacy `backend/data/events.csv` should not be used as the source of truth for current event availability.
 
-This repository does not include:
+### Ask a question
 
-* Real `.env` files
-* API keys
-* Supabase service role keys
-* Privy secrets
-* Database passwords
-* Access tokens
-* Production deployment credentials
-* Real user data
+```http
+POST /api/v1/ask
+Content-Type: application/json
 
-Only `.env.example` files are included to show the required configuration format.
+{
+  "question": "Show upcoming events",
+  "context": {
+    "current_event_id": null
+  }
+}
+```
 
-## Project Status
+The response can include `answer`, `intent`, `lang`, `events`, `action`, risk fields, and suggested next actions.
 
-This repository represents the prototype code and supporting documentation for the Backstage Pass graduation project.
+### Confirm a simulated purchase
 
-The main implemented or demonstrated areas include:
+```http
+POST /api/v1/ask/purchase/confirm
+Authorization: Bearer <privy_access_token>
+Content-Type: application/json
 
-* Event discovery
-* Ticket ordering
-* Digital ticket wallet
-* QR check-in
-* AI chatbot support
-* Fan engagement features
-* Basic reward system
-* Risk / fraud scoring prototype
-* Supabase-backed data structure
-* Frontend-backend API alignment
+{
+  "event_id": "<event_uuid>",
+  "quantity": 2,
+  "lang": "en"
+}
+```
 
-## Notes for Reviewers
+The assistant never creates an order from the initial natural-language request. The authenticated confirmation endpoint rechecks event availability, stock, user identity, and risk before creating and paying the simulated order.
 
-This repository is intended for code inspection and academic evaluation. Some features are implemented as prototype, mock, or demonstration-level modules rather than production-ready commercial services.
+## Database Requirements
 
-The active deployment may use a separate repository or deployment configuration. This repository is mainly used to present the project structure, implementation logic, API design, and documentation clearly.
+The deployed Supabase schema is the runtime source of truth. The current backend expects tables for profiles, events, orders, tickets, check-in logs, chat, rewards, marketplace, notifications, artist follows, support enquiries, and risk or ownership history.
+
+Transaction-sensitive flows depend on PostgreSQL functions including:
+
+- `create_order_atomic`
+- `pay_order_and_issue_tickets`
+- `cancel_order_and_restore_stock`
+- `refund_ticket_atomic`
+
+Before recreating the environment, verify that `backend/sql/` matches the deployed schema and RPC definitions.
+
+## Verification
+
+Recommended checks before deployment:
+
+```bash
+# Backend
+python -m compileall app
+
+# Frontend
+npm run build
+```
+
+After deployment, verify `/health`, `/docs`, `/api/v1/events`, `/api/v1/ask`, and the authenticated purchase-confirmation flow.
+
+## Known Limitations
+
+- Payment and blockchain operations are mock implementations.
+- NFT-style metadata is stored in the application database; no real smart contract is called.
+- Event chat is request/response based rather than real-time.
+- The deployed Supabase schema and RPC functions may be newer than the baseline SQL files in this repository.
+- The serialized TF-IDF store is version-sensitive; keep its scikit-learn/joblib versions compatible or rebuild the index.
+- Security, concurrency, load, and recovery testing must be expanded before production use.
+
+## Documentation
+
+The root README is intentionally brief. Detailed architecture, endpoint inventory, data contracts, workflows, deployment notes, and maintenance risks are covered in the separate **Backstage Pass Technical Documentation**. The `docs/` folder also contains project overview, API, database, UI mapping, demo, status, and architecture notes.
+
+Stress-test materials are maintained separately in [BackstagePassStresstest](https://github.com/NagitoKarahashi/BackstagePassStresstest).
+
+## Academic Use
+
+This repository is provided for code review, demonstration, and academic assessment. It does not contain production credentials or real payment and blockchain integrations.
 
 ## Author
 
 Tan Zhi
 
-Dissertation Project: Backstage Pass — AI + Web3-inspired Event Ticketing and Fan Engagement Platform
+Dissertation project: **Backstage Pass — AI + Web3-ready Event Ticketing and Fan Engagement Platform**
